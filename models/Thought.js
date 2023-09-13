@@ -37,6 +37,24 @@ thoughtSchema.virtual('reactionCount').get(function () {
   return `reactions: ${this.reactions.length}`;
   });
 
+  thoughtSchema.pre('remove', async function (next) {
+    console.log('Middleware triggered: Thought remove');
+    try {
+      const Reaction = require('./Reaction');
+  
+      // Log the execution of the middleware
+      console.log('Removing thought and associated reactions...');
+  
+      // Delete reactions associated with this thought
+      await Reaction.deleteMany({ thoughtId: this._id });
+  
+      // Continue with the middleware execution
+      next();
+    } catch (error) {
+      console.error('Error in thought remove middleware:', error);
+      next(error);
+    }
+  });
 
 // Initialize our Thought model
 const Thought = model('Thought', thoughtSchema);

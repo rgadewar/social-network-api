@@ -1,4 +1,6 @@
 const { Schema, model } = require('mongoose');
+const Thought = require('./Thought'); // Import the Thought model here
+
 
 //defining User Schema
 const userSchema = new Schema(
@@ -47,6 +49,37 @@ const userSchema = new Schema(
 userSchema.virtual('friendCount').get(function () {
   return `friends: ${this.friends.length}`;
   });
+
+// Add the 'remove' middleware to remove user's thoughts when the user is deleted
+// Add the 'remove' middleware to remove user's thoughts and reactions when the user is deleted
+userSchema.pre('remove', async function (next) {
+  try {
+    // Import the Thought and Reaction models here, inside the middleware function
+    const Thought = require('./Thought');
+    const Reaction = require('./Reaction');
+
+    // Log the execution of the middleware
+    console.log('Removing user and associated thoughts and reactions...');
+
+    // Delete user's thoughts
+    await Thought.deleteMany({ username: this.username });
+
+    // Delete user's reactions
+    await Reaction.deleteMany({ username: this.username });
+
+    // Remove user from their friends' lists (if applicable)
+    await User.updateMany(
+      { _id: { $in: this.friends } },
+      { $pull: { friends: this._id } }
+    );
+
+    // Continue with the middleware execution
+    next();
+  } catch (error) {
+    console.error('Error in remove middleware:', error);
+    next(error); // Pass the error to the next middleware
+  }
+});
 
 
 // Initialize our User model

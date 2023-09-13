@@ -14,10 +14,13 @@ router.post('/', UserController.createUser);
 router.put('/:id', UserController.updateUser);
 
 // DELETE a user by ID
-router.delete('/:id', UserController.deleteUser);
+router.delete('/:id', UserController.deleteSingleUser);
 
 // Add a new route to add a friend to a user by their IDs
 router.post('/:userId/friends/:friendId', UserController.addFriend);
+
+// Add a new route to add a friend to a user by their IDs
+router.delete('/:userId/friends/:friendId', UserController.deleteFriend);
 
 // Add a new route to get a user's friends by ID
 router.get('/:userId/friends', UserController.getUserFriends);

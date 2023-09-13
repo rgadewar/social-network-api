@@ -81,22 +81,50 @@ const thoughtController = {
   },
 
   // Add a reaction to a thought by its ID
-  addReaction: async (req, res) => {
-    try {
-      const thought = await Thought.findByIdAndUpdate(
-        req.params.thoughtId,
-        { $push: { reactions: req.body } },
-        { new: true }
-      );
-      if (!thought) {
-        return res.status(404).json({ message: 'Thought not found' });
-      }
-      res.status(200).json(thought);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Server Error' });
+  // addReaction: async (req, res) => {
+  //   try {
+  //     const thought = await Thought.findByIdAndUpdate(
+  //       req.params.thoughtId,
+  //       { $push: { reactions: req.body } },
+  //       { new: true }
+  //     );
+  //     if (!thought) {
+  //       return res.status(404).json({ message: 'Thought not found' });
+  //     }
+  //     res.status(200).json(thought);
+  //   } catch (error) {
+  //     console.error(error);
+  //     res.status(500).json({ message: 'Server Error' });
+  //   }
+  // },
+  // Add a reaction to a thought by its ID
+addReaction: async (req, res) => {
+  try {
+    const { thoughtId, username, reactionBody } = req.body;
+
+    // Check if the user exists
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
-  },
+
+    // Check if the thought exists
+    const thought = await Thought.findById(thoughtId);
+    if (!thought) {
+      return res.status(404).json({ message: 'Thought not found' });
+    }
+
+    // If both user and thought exist, proceed to add the reaction to the thought
+    thought.reactions.push({ username, reactionBody });
+    await thought.save();
+
+    res.status(200).json(thought);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+},
+
 
   // Remove a reaction from a thought by its ID and reaction ID
   removeReaction: async (req, res) => {

@@ -53,17 +53,30 @@ const UserController = {
   },
 
   // DELETE a user by ID
-  deleteUser: async (req, res) => {
-    try {
-      const deletedUser = await User.findByIdAndRemove(req.params.id);
-      if (!deletedUser) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      res.status(204).end();
-    } catch (error) {
-      res.status(400).json({ message: "Bad Request" });
+  // DELETE a user by ID
+deleteSingleUser: async (req, res) => {
+  try {
+    const { params } = req;
+    console.log('Starting user deletion process...');
+    
+    // Find the user by ID
+    const user = await User.findById(req.params.id);
+    
+    // Check if the user exists
+    if (!user) {
+      return res.status(404).json({ message: "No user found with this id" });
     }
-  },
+
+    // Delete the user to trigger the middleware
+    await User.deleteOne({ _id: user._id });
+    console.log('User deleted:', user);
+
+    res.json({ message: "Successfully deleted user, associated friend(s), and associated thought(s)" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json(err);
+  }
+},
 
   // Add a friend to a user
   addFriend: async (req, res) => {
@@ -100,6 +113,37 @@ const UserController = {
       res.status(400).json({ message: "Invalid ID format" });
     }
   },
+  // DELETE a friend from a user by user ID and friend ID
+deleteFriend: async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const friendId = req.params.friendId;
+
+    // Find the user by ID
+    const user = await User.findById(userId);
+
+    // Check if the user exists
+    if (!user) {
+      return res.status(404).json({ message: "No user found with this ID" });
+    }
+
+    // Check if the friendId exists in the user's friends list
+    const friendIndex = user.friends.indexOf(friendId);
+    if (friendIndex === -1) {
+      return res.status(404).json({ message: "Friend not found in user's friend list" });
+    }
+
+    // Remove the friend from the user's friends list
+    user.friends.splice(friendIndex, 1);
+    await user.save();
+
+    res.json({ message: "Successfully deleted friend from user's friend list" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server Error" });
+  }
+},
+
   getUserFriends: async (req, res) => {
     try {
       const userId = req.params.userId;
@@ -121,5 +165,7 @@ const UserController = {
     }
   },
 };
+
+
 
 module.exports = UserController;
